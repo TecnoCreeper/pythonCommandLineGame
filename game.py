@@ -5,7 +5,7 @@ import time
 
 
 class Player:
-    def __init__(self, job, max_health, health, base_damage, armor, bonus_damage, crit_chance, evasion_chance):
+    def __init__(self, job, max_health, health, base_damage, armor, bonus_damage, crit_chance, evasion_chance, bonus_armor):
         self.job = job
         self.max_health = max_health
         self.health = health
@@ -14,6 +14,7 @@ class Player:
         self.bonus_damage = bonus_damage
         self.crit_chance = crit_chance
         self.evasion_chance = evasion_chance
+        self.bonus_armor = bonus_armor
 
 
 class Monster:
@@ -61,18 +62,21 @@ def set_p1_stats():
         print("----------\nJob selected!")
     
     if (job_selection == "Warrior"):
+        p1.job = "Warrior"
         p1.health = 150
         p1.base_damage = 15
         p1.armor = 20
         p1.crit_chance = 10
         p1.evasion_chance = 5
-    elif (p1.job == "Thief"):
+    elif (job_selection == "Thief"):
+        p1.job = "Thief"
         p1.health = 100
         p1.base_damage = 30
         p1.armor = 5
         p1.crit_chance = 20
         p1.evasion_chance = 15
-    elif (p1.job == "Archer"):
+    elif (job_selection == "Archer"):
+        p1.job = "Archer"
         p1.health = 150
         p1.base_damage = 15
         p1.armor = 10
@@ -127,9 +131,9 @@ def display_stats():
     print(f"----------\nFloor {floor}\n----------\n")
     print("A monster appeared!\n")
     if (m1.armor > 0):
-        print(f"Your stats:\t\t\t{m1.element.title()} monster stats:\nHealth: {p1.health}\t\t\tHealth: {m1.health}\nDamage: {p1.base_damage + p1.bonus_damage}\t\t\tDamage: {m1.base_damage}\nArmor: {p1.armor}\t\t\tArmor: {m1.armor}")
+        print(f"Your stats:\t\t\t{m1.element.title()} monster stats:\nHealth: {p1.health}\t\t\tHealth: {m1.health}\nDamage: {p1.base_damage + p1.bonus_damage}\t\t\tDamage: {m1.base_damage}\nArmor: {p1.armor + p1.bonus_armor}\t\t\tArmor: {m1.armor}")
     else:
-        print(f"Your stats:\t\t\t{m1.element.title()} monster stats:\nHealth: {p1.health}\t\t\tHealth: {m1.health}\nDamage: {p1.base_damage + p1.bonus_damage}\t\t\tDamage: {m1.base_damage}\nArmor: {p1.armor}")
+        print(f"Your stats:\t\t\t{m1.element.title()} monster stats:\nHealth: {p1.health}\t\t\tHealth: {m1.health}\nDamage: {p1.base_damage + p1.bonus_damage}\t\t\tDamage: {m1.base_damage}\nArmor: {p1.armor + p1.bonus_armor}")
     if (player_burnt == True):
         print(f"Burn turns left: {burn_turns}")
     if (player_stunned == True):
@@ -137,32 +141,12 @@ def display_stats():
     print("----------")
 
 
-def crit_roll():
-    global player_damage
-    #crit roll
-    CRIT_MULT = 1.5
-    if (random.randint(1,100) <= p1.crit_chance):
-        crit = True
-    else:
-        crit = False
-
-    #calculate damage
-    if (crit == True):
-        player_damage = int((p1.base_damage + p1.bonus_damage) * CRIT_MULT)
-        print("Critical attack!")
-        time.sleep(1)
-    else:
-        player_damage = int(p1.base_damage + p1.bonus_damage)
-
-    print(f"You attack for {player_damage}.")
-    time.sleep(0.5)
-
 
 def evade_roll():
     global dmg_taken
     global evade
     #evade roll
-    if (random.randint(1,100) <= p1.evasion_chance):
+    if (random.randint(1,100) <= int(p1.evasion_chance + evade_modifier)):
         evade = True
     else:
         evade = False
@@ -171,9 +155,9 @@ def evade_roll():
     if (evade == True):
         dmg_taken = 0
         print("You evaded the attack!")
-        time.sleep(1)
+        time.sleep(0.5)
     else:
-        dmg_taken = (m1.base_damage - p1.armor)
+        dmg_taken = int((m1.base_damage - ((p1.armor + p1.bonus_armor) * armor_multiplier)))
 
 
 
@@ -188,7 +172,7 @@ def burn_apply():
             player_burnt = True
             burn_turns = 3
             print("You got burnt!")
-            time.sleep(1)
+            time.sleep(0.5)
 
     #apply eventual burn damage
     if (player_burnt == True):
@@ -199,7 +183,7 @@ def burn_apply():
         if (burn_turns == 0):
             player_burnt = False
             print("You are not burnt anymore!")
-            time.sleep(1)
+            time.sleep(0.5)
 
 
 
@@ -211,7 +195,95 @@ def stun_apply():
         if (random.randint(1,100) <= STUN_CHANCE):
             player_stunned = True
             print("You got stunned!")
-            time.sleep(1)
+            time.sleep(0.5)
+
+
+
+def attack():
+    global player_damage
+    global evade_modifier
+    global armor_multiplier
+    atk_choice = 0
+    print("Choose your attack:")
+
+    if (p1.job == "Warrior"):
+        while (atk_choice != "1" and atk_choice != "2" and atk_choice != "3"):
+            print("1 - Slash\n2 - Shield\n3 - Heavy slash")
+            atk_choice = input()
+            if (atk_choice == "1"):
+                dmg_multiplier = 1.00
+                crit_multiplier = 1.50
+                critdmg_multiplier = 1.00
+                evade_modifier = 0.00
+                armor_multiplier = 1.00
+            elif(atk_choice == "2"):
+                dmg_multiplier = 0.50
+                crit_multiplier = 0.00
+                critdmg_multiplier = 1.00
+                evade_modifier = 30
+                armor_multiplier = 2.00
+            elif(atk_choice == "3"):
+                dmg_multiplier = 2.00
+                crit_multiplier = 2.00
+                critdmg_multiplier = 2.00
+                evade_modifier = -100
+                armor_multiplier = 0.20
+
+    elif (p1.job == "Thief"):
+        while (atk_choice != "1" and atk_choice != "2" and atk_choice != "3"):
+            print("1 - Stab\n2 - Speed stab\n3 - Sneaky stab")
+            atk_choice = input()
+            if (atk_choice == "1"):
+                dmg_multiplier = 1.00
+                crit_multiplier = 1.00
+                critdmg_multiplier = 1.50
+                evade_modifier = 0.00
+                armor_multiplier = 1.00
+            elif(atk_choice == "2"):
+                dmg_multiplier = 0.50
+                crit_multiplier = 0.25
+                critdmg_multiplier = 1.00
+                evade_modifier = 30
+                armor_multiplier = 2.00
+            elif(atk_choice == "3"):
+                dmg_multiplier = 3.00
+                crit_multiplier = 1.50
+                critdmg_multiplier = 1.50
+                evade_modifier = -100
+                armor_multiplier = 0.00
+
+    elif (p1.job == "Archer"):
+        while (atk_choice != "1" and atk_choice != "2" and atk_choice != "3"):
+            print("1 - Snipe\n2 - Long distance arrow\n3 - Multi arrow")
+            atk_choice = input()
+            if (atk_choice == "1"):
+                dmg_multiplier = 1.00
+                crit_multiplier = 1.00
+                evade_modifier = 0.00
+                armor_multiplier = 1.00
+            elif(atk_choice == "2"):
+                dmg_multiplier = 0.50
+                crit_multiplier = 0.50
+                evade_modifier = 30
+                armor_multiplier = 2.00
+            elif(atk_choice == "3"):
+                dmg_multiplier = 2.00
+                crit_multiplier = 1.00
+                evade_modifier = -5
+                armor_multiplier = 0.50
+    #crit roll
+    if (random.randint(1,100) <= int(p1.crit_chance * crit_multiplier)):
+        crit = True
+    else:
+        crit = False
+
+    #calculate damage
+    if (crit == True):
+        player_damage = int((p1.base_damage + p1.bonus_damage) * dmg_multiplier * critdmg_multiplier)
+        print("Critical attack!")
+        time.sleep(0.5)
+    else:
+        player_damage = int((p1.base_damage + p1.bonus_damage) * dmg_multiplier)
 
 
 
@@ -230,22 +302,19 @@ def combat():
         #display stats
         display_stats()
 
-        #TOD0 Implement multiple attacks here (new func, choose you attack, mana / special)
-
-        print("Press ENTER to attack")
-        input()
-
         if (player_stunned == False):
-            #attack dmg and critical attack chance
-            crit_roll()
-        
+            #attack choice and critical attack chance
+            attack()
+            print(f"You attack for {player_damage}.")
+            time.sleep(0.3)
             #calculate monster health
             m1.health = m1.health - (player_damage - m1.armor)
             if (m1.armor > 0):
                 print(f"The monster defended for {m1.armor}.")
-                time.sleep(0.5)
-            print(f"Damage inflicted: {player_damage - m1.armor}.")
-            time.sleep(0.5)
+                time.sleep(0.3)
+                print(f"Damage inflicted: {player_damage - m1.armor}.")
+                time.sleep(0.3)
+            
         else:
             player_stunned = False
 
@@ -274,6 +343,9 @@ def combat():
         #check if player is dead
         if (p1.health <= 0):
             lost()
+        
+        print("Press ENTER to continue")
+        input()
 
     #when monster is dead
     else:
@@ -291,7 +363,7 @@ def regen():
     if (p1.health > p1.max_health):
         p1.health = p1.max_health
     print("----------\nHealth regenerated!")
-    time.sleep(1)
+    time.sleep(0.5)
 
 
 
@@ -322,7 +394,7 @@ def bonus_selection():
     else:
         os.system('cls' if os.name == 'nt' else 'clear')
         print("----------\nBonus selected")
-        time.sleep(1)
+        time.sleep(0.5)
 
     #bonus assign
     if (b_selection == 1):
@@ -338,7 +410,7 @@ def bonus_selection():
     elif (b_selection == "damage"):
         p1.bonus_damage = p1.bonus_damage + 5
     elif (b_selection == "armor"):
-        p1.armor = p1.armor + 5
+        p1.bonus_armor = p1.bonus_armor + 5
 
 
 
@@ -357,7 +429,7 @@ def lost():
         h.write(str(floor))
         h.close()
         print("----------\nNew highscore!")
-        time.sleep(1)
+        time.sleep(0.5)
     print("----------\nPress ENTER to restart")
     input()
     game()
@@ -373,7 +445,7 @@ def game():
     global burn_turns
     global player_burnt
     global player_stunned
-    p1 = Player("job", 0, 0, 0, 0, 0, 0, 0)
+    p1 = Player("job", 0, 0, 0, 0, 0, 0, 0, 0)
     m1 = Monster("job", 0, 0, 0, False, False)
     floor = 1
     burn_turns = 0
@@ -385,7 +457,7 @@ def game():
 
 
 
-p1 = Player("job", 0, 0, 0, 0, 0, 0, 0)
+p1 = Player("job", 0, 0, 0, 0, 0, 0, 0, 0)
 m1 = Monster("job", 0, 0, 0, False, False)
 floor = 1
 burn_turns = 0
